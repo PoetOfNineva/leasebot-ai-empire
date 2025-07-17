@@ -281,17 +281,102 @@
             addChatMessage('user', message);
             input.value = '';
 
-            // Simulate AI response
+            // Smart AI response based on message content
             setTimeout(() => {
-                const responses = [
-                    "Great choice! Let me paint you a picture of what makes this place special...",
-                    "I love your style! This area has some hidden gems that I think you'll absolutely adore.",
-                    "You've got excellent taste! I can already imagine you loving this neighborhood.",
-                    "Perfect timing! This location has that rare combination of convenience and charm you're looking for."
-                ];
-                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                addChatMessage('bot', randomResponse);
+                const response = generateSmartResponse(message);
+                addChatMessage('bot', response);
             }, 1000);
+        }
+
+        function generateSmartResponse(message) {
+            const msg = message.toLowerCase();
+            
+            // City-specific responses
+            if (msg.includes('san diego')) {
+                const sdListings = listings.filter(l => l.city.toLowerCase().includes('san diego'));
+                if (sdListings.length > 0) {
+                    const listing = sdListings[0];
+                    return `Great choice! I have a ${listing.bedrooms} in San Diego for ${listing.price}. ${listing.description} Want to know more about this area or schedule a tour?`;
+                }
+                return "San Diego is amazing! I have some great options there. The beach lifestyle, perfect weather, and vibrant neighborhoods make it really special. What's your budget range?";
+            }
+            
+            if (msg.includes('san francisco') || msg.includes('sf')) {
+                const sfListings = listings.filter(l => l.city.toLowerCase().includes('san francisco'));
+                if (sfListings.length > 0) {
+                    const listing = sfListings[0];
+                    return `SF is incredible! I have a ${listing.bedrooms} for ${listing.price}. ${listing.description} The tech scene and culture here are unmatched. Interested in seeing it?`;
+                }
+                return "San Francisco has such unique character! Great food scene, tech opportunities, and those iconic hills. What type of place are you looking for?";
+            }
+            
+            if (msg.includes('los angeles') || msg.includes('la')) {
+                const laListings = listings.filter(l => l.city.toLowerCase().includes('los angeles'));
+                if (laListings.length > 0) {
+                    const listing = laListings[0];
+                    return `LA is perfect for you! I have a ${listing.bedrooms} for ${listing.price}. ${listing.description} The entertainment industry and year-round sunshine make it special. Want to learn more?`;
+                }
+                return "Los Angeles offers everything - beaches, mountains, entertainment, and great weather! What neighborhood vibe are you going for?";
+            }
+            
+            if (msg.includes('portland')) {
+                const pdxListings = listings.filter(l => l.city.toLowerCase().includes('portland'));
+                if (pdxListings.length > 0) {
+                    const listing = pdxListings[0];
+                    return `Portland is fantastic! I have a ${listing.bedrooms} for ${listing.price}. ${listing.description} The coffee culture, food scene, and outdoor access are amazing. Interested?`;
+                }
+                return "Portland has such a cool vibe! Great food, coffee culture, and easy access to nature. What's most important to you in a neighborhood?";
+            }
+            
+            // Budget-related responses
+            if (msg.includes('budget') || msg.includes('price') || msg.includes('$') || msg.includes('cost')) {
+                const prices = listings.map(l => l.price).join(', ');
+                return `I have places ranging from ${prices}. What's your budget range? I can show you the best options in that range and help you find great value!`;
+            }
+            
+            // Bedroom-related responses
+            if (msg.includes('bedroom') || msg.includes('br') || msg.includes('1br') || msg.includes('2br')) {
+                const bedrooms = msg.includes('2') ? '2 BR' : '1 BR';
+                const matchingListings = listings.filter(l => l.bedrooms === bedrooms);
+                if (matchingListings.length > 0) {
+                    const cities = matchingListings.map(l => l.city).join(', ');
+                    return `I have ${bedrooms} options in ${cities}. Want to see what's available in a specific city?`;
+                }
+                return `Let me check what ${bedrooms} options I have available. Any preferred location?`;
+            }
+            
+            // Amenity-related responses
+            if (msg.includes('pool') || msg.includes('gym') || msg.includes('beach') || msg.includes('bart')) {
+                const amenityListings = listings.filter(l => {
+                    return l.description.toLowerCase().includes(msg.includes('pool') ? 'pool' : 
+                           msg.includes('gym') ? 'gym' : 
+                           msg.includes('beach') ? 'beach' : 'bart');
+                });
+                if (amenityListings.length > 0) {
+                    const listing = amenityListings[0];
+                    return `Perfect! I have a ${listing.bedrooms} in ${listing.city} for ${listing.price} that has exactly what you're looking for. ${listing.description} Want to schedule a tour?`;
+                }
+                return "Let me find places with those amenities! What city would you prefer?";
+            }
+            
+            // General helpful responses
+            if (msg.includes('help') || msg.includes('looking for')) {
+                return "I'm here to help you find the perfect place! Tell me: What city interests you? What's your budget range? How many bedrooms do you need?";
+            }
+            
+            if (msg.includes('tour') || msg.includes('visit') || msg.includes('see')) {
+                return "I'd love to set up a tour! Which property caught your eye? I can arrange a viewing at your convenience.";
+            }
+            
+            // Default intelligent response
+            const responses = [
+                "That's a great question! Let me help you find exactly what you're looking for. What city and budget range work best for you?",
+                "I'd love to help you with that! Are you looking for something specific in terms of location, price, or amenities?",
+                "Perfect! I can definitely help you find the right place. What's most important to you - location, price, or specific features?",
+                "Great! Let me find you some options. Which city interests you most, and what's your ideal budget range?"
+            ];
+            
+            return responses[Math.floor(Math.random() * responses.length)];
         }
 
         document.getElementById('sendChatBtn').addEventListener('click', sendChatMessage);
