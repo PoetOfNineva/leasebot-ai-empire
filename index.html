@@ -166,7 +166,7 @@
         <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-3">
             <div class="flex justify-start">
                 <div class="max-w-xs px-3 py-2 rounded-lg bg-gray-700 text-gray-100">
-                    Hey! I'm LeaseBot, your nationwide rental guide. I know about properties in all 50 states! What city or state are you interested in?
+                    Hey! I'm LeaseBot, your nationwide rental guide. I can filter properties by any state, city, price, or amenity! Try "show me Florida" or "find places under $2000"
                 </div>
             </div>
         </div>
@@ -176,7 +176,7 @@
                 <input
                     type="text"
                     id="chatInput"
-                    placeholder="Ask about rentals in any state..."
+                    placeholder="Try: show me Florida, find studios, under $2000..."
                     class="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
                 />
                 <button id="sendChatBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
@@ -389,16 +389,16 @@
             ];
             
             const amenities = [
-                'Pool and fitness center',
-                'In-unit laundry',
-                'Parking included',
-                'Pet-friendly',
-                'Balcony/patio',
-                'Walk-in closets',
-                'Dishwasher',
-                'Air conditioning',
-                'Hardwood floors',
-                'Fireplace'
+                'pool and fitness center',
+                'in-unit laundry',
+                'parking included',
+                'pet-friendly',
+                'balcony/patio',
+                'walk-in closets',
+                'dishwasher',
+                'air conditioning',
+                'hardwood floors',
+                'fireplace'
             ];
             
             const listings = [];
@@ -426,8 +426,10 @@
                         city: cityData.city,
                         state: cityData.state,
                         price: `$${price.toLocaleString()}/mo`,
+                        priceValue: price, // For filtering
                         bedrooms: bedrooms,
                         description: `${description}. Features ${amenity}.`,
+                        amenities: amenity,
                         link: `https://example.com/listing${id}`,
                         image: `https://picsum.photos/400/300?random=${id}`,
                         source: 'demo'
@@ -476,7 +478,7 @@
             };
         }
 
-        // Filter listings
+        // Enhanced filter function
         function filterListings() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const stateFilter = document.getElementById('stateFilter').value;
@@ -486,12 +488,26 @@
                 const matchesSearch = !searchTerm || 
                     listing.city.toLowerCase().includes(searchTerm) ||
                     listing.state.toLowerCase().includes(searchTerm) ||
-                    listing.description.toLowerCase().includes(searchTerm);
+                    listing.description.toLowerCase().includes(searchTerm) ||
+                    listing.amenities.toLowerCase().includes(searchTerm);
                 
                 const matchesState = !stateFilter || listing.state === stateFilter;
                 const matchesBedrooms = !bedroomFilter || listing.bedrooms === bedroomFilter;
                 
                 return matchesSearch && matchesState && matchesBedrooms;
+            });
+            
+            currentPage = 0;
+            displayedListings = [];
+            updateListingCount();
+            renderListings();
+        }
+
+        // Filter by price range
+        function filterByPrice(minPrice, maxPrice) {
+            filteredListings = allListings.filter(listing => {
+                const price = listing.priceValue;
+                return price >= minPrice && price <= maxPrice;
             });
             
             currentPage = 0;
@@ -678,26 +694,155 @@
             }, 1000);
         }
 
+        // ENHANCED SMART CHAT with ALL filtering capabilities
         function generateNationwideResponse(message) {
             const msg = message.toLowerCase();
             
-            // State-specific responses
+            // ACTION-BASED RESPONSES - Actually do things!
+            if (msg.includes('show me') || msg.includes('filter') || msg.includes('find') || msg.includes('search')) {
+                
+                // PRICE FILTERING
+                if (msg.includes('under') || msg.includes('below') || msg.includes('less than')) {
+                    const priceMatch = msg.match(/(\d+)/);
+                    if (priceMatch) {
+                        const maxPrice = parseInt(priceMatch[1]);
+                        filterByPrice(0, maxPrice);
+                        return `Perfect! I've filtered to show properties under $${maxPrice.toLocaleString()}. Found ${filteredListings.length} affordable options above!`;
+                    }
+                }
+                
+                if (msg.includes('over') || msg.includes('above') || msg.includes('more than')) {
+                    const priceMatch = msg.match(/(\d+)/);
+                    if (priceMatch) {
+                        const minPrice = parseInt(priceMatch[1]);
+                        filterByPrice(minPrice, 10000);
+                        return `Great! Showing properties over $${minPrice.toLocaleString()}. Found ${filteredListings.length} premium options above!`;
+                    }
+                }
+                
+                // PRICE RANGE FILTERING
+                if (msg.includes('between') && msg.includes('and')) {
+                    const priceMatch = msg.match(/(\d+).*?(\d+)/);
+                    if (priceMatch) {
+                        const minPrice = parseInt(priceMatch[1]);
+                        const maxPrice = parseInt(priceMatch[2]);
+                        filterByPrice(minPrice, maxPrice);
+                        return `Perfect! Filtered to show properties between $${minPrice.toLocaleString()} and $${maxPrice.toLocaleString()}. Found ${filteredListings.length} options in your budget!`;
+                    }
+                }
+                
+                // STATE FILTERING
+                if (msg.includes('florida') || msg.includes('fl')) {
+                    filterByState('FL');
+                    return `Perfect! I've filtered to show Florida properties only. You can see all ${allListings.filter(l => l.state === 'FL').length} Florida listings above, from Miami's beaches to Orlando's theme parks!`;
+                }
+                if (msg.includes('california') || msg.includes('ca')) {
+                    filterByState('CA');
+                    return `Awesome! Now showing California properties only. ${allListings.filter(l => l.state === 'CA').length} listings from LA to San Francisco are displayed above!`;
+                }
+                if (msg.includes('texas') || msg.includes('tx')) {
+                    filterByState('TX');
+                    return `Great choice! Filtered to show Texas properties. ${allListings.filter(l => l.state === 'TX').length} listings across Houston, Dallas, Austin, and more are now visible!`;
+                }
+                if (msg.includes('new york') || msg.includes('ny')) {
+                    filterByState('NY');
+                    return `Excellent! Now showing New York properties. ${allListings.filter(l => l.state === 'NY').length} listings from NYC to upstate are displayed above!`;
+                }
+                if (msg.includes('washington') || msg.includes('wa')) {
+                    filterByState('WA');
+                    return `Perfect! Filtered to show Washington state properties. ${allListings.filter(l => l.state === 'WA').length} listings from Seattle to Spokane are above!`;
+                }
+                if (msg.includes('colorado') || msg.includes('co')) {
+                    filterByState('CO');
+                    return `Great! Now showing Colorado properties. ${allListings.filter(l => l.state === 'CO').length} listings with mountain views and outdoor access!`;
+                }
+                
+                // CITY FILTERING
+                const cityListings = allListings.filter(l => 
+                    l.city.toLowerCase().includes(msg) || 
+                    msg.includes(l.city.toLowerCase())
+                );
+                
+                if (cityListings.length > 0) {
+                    const city = cityListings[0].city;
+                    document.getElementById('searchInput').value = city;
+                    filterListings();
+                    return `Perfect! I've filtered to show ${cityListings.length} listings in ${city}. You can see them all above!`;
+                }
+                
+                // BEDROOM FILTERING
+                if (msg.includes('studio')) {
+                    document.getElementById('bedroomFilter').value = 'Studio';
+                    filterListings();
+                    return `Great! Now showing studio apartments only. Check out the ${filteredListings.length} studio options above!`;
+                }
+                if (msg.includes('1 bed') || msg.includes('1br') || msg.includes('1 br')) {
+                    document.getElementById('bedroomFilter').value = '1 BR';
+                    filterListings();
+                    return `Perfect! Filtered to show 1-bedroom properties. All ${filteredListings.length} options are displayed above!`;
+                }
+                if (msg.includes('2 bed') || msg.includes('2br') || msg.includes('2 br')) {
+                    document.getElementById('bedroomFilter').value = '2 BR';
+                    filterListings();
+                    return `Excellent! Now showing 2-bedroom properties only. Browse the ${filteredListings.length} results above!`;
+                }
+                if (msg.includes('3 bed') || msg.includes('3br') || msg.includes('3 br')) {
+                    document.getElementById('bedroomFilter').value = '3 BR';
+                    filterListings();
+                    return `Great! Filtered to show 3-bedroom properties. Found ${filteredListings.length} spacious options above!`;
+                }
+                
+                // AMENITY FILTERING
+                if (msg.includes('pool') || msg.includes('fitness') || msg.includes('gym')) {
+                    document.getElementById('searchInput').value = 'pool fitness';
+                    filterListings();
+                    return `Perfect! Filtered to show properties with pools and fitness centers. Found ${filteredListings.length} luxury options above!`;
+                }
+                if (msg.includes('parking') || msg.includes('garage')) {
+                    document.getElementById('searchInput').value = 'parking';
+                    filterListings();
+                    return `Great! Now showing properties with parking included. Found ${filteredListings.length} convenient options above!`;
+                }
+                if (msg.includes('pet') || msg.includes('dog') || msg.includes('cat')) {
+                    document.getElementById('searchInput').value = 'pet-friendly';
+                    filterListings();
+                    return `Awesome! Filtered to show pet-friendly properties. Found ${filteredListings.length} pet-welcoming homes above!`;
+                }
+                if (msg.includes('balcony') || msg.includes('patio') || msg.includes('outdoor')) {
+                    document.getElementById('searchInput').value = 'balcony patio';
+                    filterListings();
+                    return `Perfect! Showing properties with outdoor spaces. Found ${filteredListings.length} options with balconies/patios above!`;
+                }
+                
+                return `I've searched for "${message}" - check the ${filteredListings.length} results above! You can also use the filters to narrow down your search.`;
+            }
+            
+            // Reset filters
+            if (msg.includes('reset') || msg.includes('clear') || msg.includes('all') || msg.includes('show all')) {
+                document.getElementById('searchInput').value = '';
+                document.getElementById('stateFilter').value = '';
+                document.getElementById('bedroomFilter').value = '';
+                filterListings();
+                return `Reset! Now showing all ${allListings.length} properties nationwide. You can see everything above!`;
+            }
+            
+            // State-specific responses (when not asking to show)
             const stateResponses = {
                 'california': () => {
                     const caListings = allListings.filter(l => l.state === 'CA');
-                    return `California is amazing! I have ${caListings.length} listings across LA, San Francisco, San Diego, and more. Prices range from $1,500 in Fresno to $3,200 in SF. Which city interests you most?`;
+                    return `California is amazing! I have ${caListings.length} listings across LA, San Francisco, San Diego, and more. Prices range from $1,500 in Fresno to $3,200 in SF. Say "show me California" to see them all!`;
                 },
                 'texas': () => {
                     const txListings = allListings.filter(l => l.state === 'TX');
-                    return `Texas has incredible value! I have ${txListings.length} listings in Houston, Dallas, Austin, and San Antonio. No state income tax and great BBQ! Prices start around $1,200. What's your budget range?`;
+                    return `Texas has incredible value! I have ${txListings.length} listings in Houston, Dallas, Austin, and San Antonio. No state income tax and great BBQ! Prices start around $1,200. Say "show me Texas" to filter!`;
                 },
                 'florida': () => {
                     const flListings = allListings.filter(l => l.state === 'FL');
-                    return `Florida living at its finest! I have ${flListings.length} listings from Miami's beaches to Orlando's theme parks. Year-round sunshine and no state income tax. Prices range from $1,500-$2,600. Interested in any specific area?`;
+                    return `Florida living at its finest! I have ${flListings.length} listings from Miami's beaches to Orlando's theme parks. Year-round sunshine and no state income tax. Prices range from $1,500-$2,600. Say "show me Florida" to see them all!`;
                 },
                 'new york': () => {
                     const nyListings = allListings.filter(l => l.state === 'NY');
-                    return `The Empire State! I have ${nyListings.length} listings from NYC's energy to Buffalo's charm. NYC starts around $3,500 while upstate cities are much more affordable. What's your style?`;
+                    return `The Empire State! I have ${nyListings.length} listings from NYC's energy to Buffalo's charm. NYC starts around $3,500 while upstate cities are much more affordable. Say "show me New York" to filter!`;
                 }
             };
             
@@ -721,20 +866,20 @@
                     return sum + price;
                 }, 0) / cityListings.length;
                 
-                return `Great choice! I have ${cityListings.length} listings in ${city.city}, ${city.state}. Average price is around $${Math.round(avgPrice).toLocaleString()}/mo. This city offers ${getCityHighlight(city.city)}. Want to see specific options?`;
+                return `Great choice! I have ${cityListings.length} listings in ${city.city}, ${city.state}. Average price is around $${Math.round(avgPrice).toLocaleString()}/mo. This city offers ${getCityHighlight(city.city)}. Say "show me ${city.city}" to see all listings!`;
             }
             
             // Budget responses
             if (msg.includes('budget') || msg.includes('price') || msg.includes('$')) {
-                return `I can help you find great value nationwide! Budget-friendly options under $1,500 in cities like Birmingham, Buffalo, and Indianapolis. Mid-range $1,500-$2,500 in Atlanta, Denver, and Portland. Premium $2,500+ in SF, NYC, and Boston. What's your ideal monthly budget?`;
+                return `I can help you find great value nationwide! Try: "show me under $1500" for budget options, "show me between $1500 and $2500" for mid-range, or "show me over $2500" for luxury properties. What's your budget range?`;
             }
             
             // General responses
             const responses = [
-                `I cover all 50 states with ${allListings.length} listings! Which state or city interests you most?`,
-                `From coast to coast, I can find your perfect home. Are you looking for big city energy or small town charm?`,
-                `Nationwide search at your fingertips! Tell me about your ideal location, budget, or lifestyle preferences.`,
-                `I have listings everywhere from sunny California to the historic East Coast. What's your dream destination?`
+                `I cover all 50 states with ${allListings.length} listings! Say "show me [state]" to filter by state, "show me under $2000" for budget, or "show me 2 bedroom" for specific needs.`,
+                `From coast to coast, I can find your perfect home. Try "show me California", "find studios", or "show me places with pools" to filter the results above!`,
+                `Nationwide search at your fingertips! Say "show me Florida", "under $1800", or "pet-friendly" and I'll filter the listings above for you.`,
+                `I have listings everywhere! Try commands like "show me Texas", "find 2 bedroom under $2000", or "show me places with parking" to filter results.`
             ];
             
             return responses[Math.floor(Math.random() * responses.length)];
