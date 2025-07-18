@@ -68,12 +68,12 @@
                 </div>
                 
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="#home" class="hover:text-gold transition-colors">Home</a>
-                    <a href="#about" class="hover:text-gold transition-colors">About</a>
-                    <a href="#cities" class="hover:text-gold transition-colors">Cities</a>
-                    <a href="#contact" class="hover:text-gold transition-colors">Contact</a>
-                    <a href="#add-property" class="hover:text-gold transition-colors">Add Your Property</a>
-                </div>
+    <a href="#home" onclick="goToHome()" class="hover:text-gold transition-colors cursor-pointer">Home</a>
+    <a href="#about" onclick="showAbout()" class="hover:text-gold transition-colors cursor-pointer">About</a>
+    <a href="#cities" onclick="showCities()" class="hover:text-gold transition-colors cursor-pointer">Cities</a>
+    <a href="#contact" onclick="showContact()" class="hover:text-gold transition-colors cursor-pointer">Contact</a>
+    <a href="#add-property" onclick="openAddPropertyModal()" class="hover:text-gold transition-colors cursor-pointer">Add Your Property</a>
+</div>
                 
                 <div class="flex items-center space-x-3">
                     <div id="authButtons" class="flex items-center space-x-3">
@@ -1559,7 +1559,17 @@
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             updateAuthUI();
             closeModal();
-            showNotification(`🏴‍☠️ Welcome to the Empire, ${currentUser.name}!`, 'success');
+            if (type === 'landlord') {
+                showNotification(`🏰 Welcome ${currentUser.name}! Opening your Landlord Dashboard...`, 'success');
+                setTimeout(() => {
+                    showDashboard();
+                }, 2000);
+            } else {
+                showNotification(`🏡 Welcome ${currentUser.name}! Start exploring and saving properties!`, 'success');
+                setTimeout(() => {
+                    closeModal();
+                }, 1500);
+            }
         }
 
         function handleLogin(event) {
@@ -2172,6 +2182,31 @@
                 timeout = setTimeout(later, wait);
             };
         }
+        // ... your last function ends here
+        }
+
+        // ADD THE NAVIGATION FUNCTIONS HERE ⬅️
+        function goToHome() {
+            document.getElementById('dashboard').classList.add('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function showAbout() {
+            alert('About section coming soon! 🏰 LeaseBot AI Empire - The future of real estate.');
+        }
+
+        function showCities() {
+            resetFilters();
+            showNotification('🗺️ Showing all empire territories!', 'info');
+        }
+
+        function showContact() {
+            alert('📞 Contact: empire@leasebotai.com | 🏴‍☠️ Ready to conquer real estate together!');
+        }
+
+    </script>  ⬅️ BEFORE THIS LINE
+</body>
+</html>
     </script>
 </body>
 </html>
